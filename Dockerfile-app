@@ -1,0 +1,48 @@
+ARG BASE_CONTAINER=debian:bullseye
+FROM $BASE_CONTAINER
+
+LABEL maintainer="Christophe Trophime <christophr.trophime@lncmi.cnrs.fr>"
+
+ARG NB_USER="jovyan"
+ARG NB_UID="1000"
+ARG NB_GID="100"
+
+# Seup demo environment variables
+ENV LANG=en_US.UTF-8 \
+	LANGUAGE=en_US.UTF-8 \
+	LC_ALL=C.UTF-8
+
+RUN apt-get -qq update && \
+    apt-get -y install debian-keyring lsb-release && \
+    cp /usr/share/keyrings/debian-maintainers.gpg /etc/apt/trusted.gpg.d
+
+# RUN echo "lsb_release=$(lsb_release -cs)"
+RUN apt-get -qq update && \
+    apt-get -y install python3 python3-pip && \
+    python3 -m pip install jupyterhub jhsingle-native-proxy>=0.0.10 && \
+    python3 -m pip install voila && \
+    python3 -m pip install ipywidgets ipyfilechooser && \
+    echo "*** install prerequisites for MagnetTools ***" && \
+    echo "deb http://euler.GRENOBLE.LNCMI.LOCAL/~trophime/debian/ $(lsb_release -cs) main" > /etc/apt/sources.list.d/lncmi.list && \
+    apt-get -qq update && \
+    apt-get -y install python3-matplotlib python3-numpy && \
+    apt-get -y install python3-magnettools python3-mplcursors python3-pandas && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# create a user, since we don't want to run as root
+RUN useradd -m -s /bin/bash -N --uid $NB_UID --gid $NB_GID $NB_USER
+ENV HOME=/home/${NB_USER}
+WORKDIR $HOME
+USER ${NB_USER}
+
+COPY --chown=${NB_UID}:${NB_GID} entrypoint.sh /home/${NB_USER}
+COPY --chown=${NB_UID}:${NB_GID} voila-Bmap.ipynb /home/${NB_USER}
+
+RUN chmod u+x /home/${NB_USER}/entrypoint.sh
+
+EXPOSE 8888
+
+ENTRYPOINT ["/home/jovyan/entrypoint.sh"]
+
+CMD ["jhsingle-native-proxy", "--destport", "8505", "voila", "/home/${NB_USER}/voila-Bmap.ipynb", "{--}port={port}", "{--}no-browser", "{--}Voila.base_url={base_url}/", "{--}Voila.server_url=/"]
+
