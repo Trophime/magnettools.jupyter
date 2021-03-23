@@ -23,7 +23,7 @@ On WSL2, to get X11 working:
 
 This feature is needed to get file selection with tkinter in notebooks.
 
-= Running as a Standalone webapp
+# Running as a Standalone webapp
 
 * `docker build -f ./Dockerfile-app -t trophime/imagnettools:app .`
 * `docker run [--dns lncmi.dns] -it --rm -p 80:8888 -v $PWD/tmp/data:/home/jovyan/work/data trophime/imagnettools:app`
@@ -59,5 +59,7 @@ import sys
 !{sys.executable} -m pip install numpy
 ```
 
-// ref: https://jakevdp.github.io/blog/2017/12/05/installing-python-packages-from-jupyter/
+# References:
+
+https://jakevdp.github.io/blog/2017/12/05/installing-python-packages-from-jupyter/
 
