@@ -5,39 +5,62 @@ FROM $BASE_CONTAINER
 
 LABEL maintainer="Christophe Trophime <christophe.trophime@lncmi.cnrs.fr>"
 
-ARG NB_USER="jovyan"
-ARG NB_UID="1000"
-ARG NB_GID="100"
+# Avoid warnings by switching to noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
+
+# This Dockerfile adds a non-root user with sudo access. Use the "remoteUser"
+# property in devcontainer.json to use it. On Linux, the container user's GID/UIDs
+# will be updated to match your local UID/GID (when using the dockerFile property).
+# See https://aka.ms/vscode-remote/containers/non-root-user for details.
+ARG USERNAME=vscode
+ARG USER_UID=1001
+ARG USER_GID=$USER_UID
 
 USER root
 
-# to help debug but shall not be present in prod
-RUN echo $NB_USER ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$NB_USER && \
-    chmod 0440 /etc/sudoers.d/$NB_USER
-
-# Seup demo environment variables
 ENV LANG=en_US.UTF-8 \
 	LANGUAGE=en_US.UTF-8 \
 	LC_ALL=C.UTF-8
 
 RUN apt-get -qq update && \
     apt-get -y install debian-keyring lsb-release && \
-    cp /usr/share/keyrings/debian-maintainers.gpg /etc/apt/trusted.gpg.d
-
-RUN echo "lsb_release=$(lsb_release -cs)"
-RUN echo "*** install prerequisites for MagnetTools ***" && \
+    cp /usr/share/keyrings/debian-maintainers.gpg /etc/apt/trusted.gpg.d && \
+    echo "*** install prerequisites for MagnetTools ***" && \
     echo "deb http://euler.GRENOBLE.LNCMI.LOCAL/~trophime/debian/ $(lsb_release -cs) main" > /etc/apt/sources.list.d/lncmi.list && \
-    apt-get -qq update && \
-    apt-get -y install git && \
-    apt-get -y install python3-magnettools python3-magnetsetup python3-magnetgeo python3-chevron && \
-    apt-get -y install python3-mplcursors
+    apt-get update
 
-# ffmpeg for matplotlib anim & dvipng+cm-super for latex labels
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg dvipng cm-super && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-
-USER $NB_UID
+# Configure apt and install packages
+RUN apt-get update \
+    && apt-get -y install --no-install-recommends apt-utils dialog 2>&1 \
+    # \
+    # Verify git, process tools, lsb-release (useful for CLI installs) installed\
+    && apt-get -y install git iproute2 procps lsb-release \
+    #\
+    # Install C++ tools\
+    && apt-get -y install build-essential python3-minimal libpython3.8 \
+    && apt-get -y install git \
+    && apt-get -y install python3-magnettools python3-magnetsetup python3-magnetgeo python3-chevron \
+    # ffmpeg for matplotlib anim & dvipng+cm-super for latex labels
+    && apt-get update \
+    && apt-get install -y --no-install-recommends ffmpeg dvipng cm-super \
+    #\
+    # Create a non-root user to use if preferred - see https://aka.ms/vscode-remote/containers/non-root-user.\
+    && groupadd --gid $USER_GID $USERNAME \
+    && useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    # [Optional] Add sudo support for the non-root user
+    && apt-get install -y sudo \
+    #&& if [ "$(lsb_release -cs)" = "focal" ]; then echo "Set disable_coredump false" > /etc/sudo.conf; fi \
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME\
+    && chmod 0440 /etc/sudoers.d/$USERNAME \
+    # add github ssh key
+    && mkdir ~vscode/.ssh/ \
+    && ssh-keyscan github.com >> ~vscode/.ssh/known_hosts \
+    && chown -R vscode.$USER_GID ~vscode/.ssh \
+    #
+    # Clean up
+    && apt-get autoremove -y \
+    && apt-get clean -y \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Python 3 packages
 RUN mamba install --quiet --yes \
@@ -88,8 +111,10 @@ RUN mamba install --quiet --yes \
     jupyter lab build -y && \
     jupyter lab clean -y && \
     npm cache clean --force && \
+    rm -rf "/home/${USERNAME}/.cache/yarn" && \
+    rm -rf "/home/${USERNAME}/.node-gyp" && \
     fix-permissions "${CONDA_DIR}" && \
-    fix-permissions "/home/${NB_USER}"
+    fix-permissions "/home/${USERNAME}"
 
 # Install properly MagnetTools into conda env
 USER root
@@ -101,23 +126,24 @@ RUN find / -name notebooks && \
     echo " ${PYVER}" && \
     ln -s /usr/lib/python3/dist-packages/MagnetTools ${CONDA_DIR}/lib/python${PYVER}/site-packages/MagnetTools
     
-# ln -s /usr/lib/python3/dist-packages/MagnetTools/_MagnetTools.cpython-38-x86_64-linux-gnu.so ${CONDA_DIR}/lib/python${PYVER}/site-packages/MagnetTools
-
-USER $NB_UID
+USER $USER_UID
 # Install facets which does not have a pip or conda package at the moment
 WORKDIR /tmp
 RUN git clone https://github.com/PAIR-code/facets.git && \
     jupyter nbextension install facets/facets-dist/ --sys-prefix && \
     rm -rf /tmp/facets && \
     fix-permissions "${CONDA_DIR}" && \
-    fix-permissions "/home/${NB_USER}"
+    fix-permissions "/home/${USERNAME}"
 
 # Import matplotlib the first time to build the font cache.
-ENV XDG_CACHE_HOME="/home/${NB_USER}/.cache/"
+ENV XDG_CACHE_HOME="/home/${USERNAME}/.cache/"
 
 RUN MPLBACKEND=Agg python -c "import matplotlib.pyplot" && \
-    fix-permissions "/home/${NB_USER}"
+    fix-permissions "/home/${USERNAME}"
 
-USER $NB_UID
+# Switch back to dialog for any ad-hoc use of apt-get
+ENV DEBIAN_FRONTEND=dialog
 
+
+USER $USER_UID
 WORKDIR $HOME

@@ -1,7 +1,7 @@
 ARG BASE_CONTAINER=debian:bullseye
 FROM $BASE_CONTAINER
 
-LABEL maintainer="Christophe Trophime <christophr.trophime@lncmi.cnrs.fr>"
+LABEL maintainer="Christophe Trophime <christophe.trophime@lncmi.cnrs.fr>"
 
 ARG NB_USER="jovyan"
 ARG NB_UID="1000"
@@ -26,7 +26,8 @@ RUN apt-get -qq update && \
     echo "deb http://euler.GRENOBLE.LNCMI.LOCAL/~trophime/debian/ $(lsb_release -cs) main" > /etc/apt/sources.list.d/lncmi.list && \
     apt-get -qq update && \
     apt-get -y install python3-matplotlib python3-numpy && \
-    apt-get -y install python3-magnettools python3-mplcursors python3-pandas && \
+    apt-get -y install python3-magnettools python3-magnetsetup python3-magnetgeo python3-chevron && \
+    apt-get -y install python3-mplcursors python3-pandas && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # create a user, since we don't want to run as root
@@ -44,5 +45,5 @@ EXPOSE 8888
 
 ENTRYPOINT ["/home/jovyan/entrypoint.sh"]
 
-CMD ["jhsingle-native-proxy", "--destport", "8505", "voila", "/home/${NB_USER}/voila-Bmap.ipynb", "{--}port={port}", "{--}no-browser", "{--}Voila.base_url={base_url}/", "{--}Voila.server_url=/"]
+CMD ["jhsingle-native-proxy", "--destport", "8505", "voila", "/home/${NB_USER}/voila-Bmap-db.ipynb", "{--}port={port}", "{--}no-browser", "{--}Voila.base_url={base_url}/", "{--}Voila.server_url=/"]
 
