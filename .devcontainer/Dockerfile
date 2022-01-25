@@ -12,9 +12,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 # property in devcontainer.json to use it. On Linux, the container user's GID/UIDs
 # will be updated to match your local UID/GID (when using the dockerFile property).
 # See https://aka.ms/vscode-remote/containers/non-root-user for details.
-ARG USERNAME=vscode
-ARG USER_UID=1001
-ARG USER_GID=$USER_UID
+ARG USERNAME=${NB_USER}
+ARG USER_UID=${NB_UID}
+ARG USER_GID=${NB_GID}
 
 USER root
 
@@ -45,17 +45,17 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends ffmpeg dvipng cm-super \
     #\
     # Create a non-root user to use if preferred - see https://aka.ms/vscode-remote/containers/non-root-user.\
-    && groupadd --gid $USER_GID $USERNAME \
-    && useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    # && groupadd --gid $USER_GID $USERNAME \
+    # && useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
     # [Optional] Add sudo support for the non-root user
     && apt-get install -y sudo \
     #&& if [ "$(lsb_release -cs)" = "focal" ]; then echo "Set disable_coredump false" > /etc/sudo.conf; fi \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME\
     && chmod 0440 /etc/sudoers.d/$USERNAME \
     # add github ssh key
-    && mkdir ~vscode/.ssh/ \
-    && ssh-keyscan github.com >> ~vscode/.ssh/known_hosts \
-    && chown -R vscode.$USER_GID ~vscode/.ssh \
+    && mkdir -p ~${USERNAME}/.ssh/ \
+    && ssh-keyscan github.com >> ~${USERNAME}/.ssh/known_hosts \
+    && chown -R ${USERNAME}.$USER_GID ~${USERNAME}/.ssh \
     #
     # Clean up
     && apt-get autoremove -y \
@@ -98,6 +98,7 @@ RUN mamba install --quiet --yes \
     'bqplot' \
     'tabulate' \
     'mplcursors' \
+    'chevron' \
     && \
     mamba clean --all -f -y && \
     # Activate ipywidgets extension in the environment that runs the notebook server
@@ -124,9 +125,10 @@ RUN find / -name notebooks && \
     echo -n "Finding python version:" && \
     PYVER=$(find ${CONDA_DIR}/lib -maxdepth 1 -name python\* | perl -p -e "s|${CONDA_DIR}/lib/python||") && \
     echo " ${PYVER}" && \
-    ln -s /usr/lib/python3/dist-packages/MagnetTools ${CONDA_DIR}/lib/python${PYVER}/site-packages/MagnetTools
+    ln -s /usr/lib/python3/dist-packages/MagnetTools ${CONDA_DIR}/lib/python${PYVER}/site-packages/MagnetTools && \
+    ln -s /usr/lib/python3/dist-packages/python_magnetsetup ${CONDA_DIR}/lib/python${PYVER}/site-packages/python_magnetsetup && \
+    ln -s /usr/lib/python3/dist-packages/python_magnetgeo ${CONDA_DIR}/lib/python${PYVER}/site-packages/python_magnetgeo
     
-USER $USER_UID
 # Install facets which does not have a pip or conda package at the moment
 WORKDIR /tmp
 RUN git clone https://github.com/PAIR-code/facets.git && \
@@ -134,6 +136,8 @@ RUN git clone https://github.com/PAIR-code/facets.git && \
     rm -rf /tmp/facets && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${USERNAME}"
+
+USER $USER_UID
 
 # Import matplotlib the first time to build the font cache.
 ENV XDG_CACHE_HOME="/home/${USERNAME}/.cache/"

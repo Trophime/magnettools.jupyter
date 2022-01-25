@@ -6,7 +6,7 @@
 	    "--security-opt", "seccomp=unconfined",
             "--net", "host", 
             "-e", "DISPLAY=${env:DISPLAY}",
-            "-v", "/tmp/.X11-unix:/tmp/.X11-unix",
+            "-v", "/tmp/.X11-unix:/tmp/.X11-unix", 
 	    "-v", "${env:PWD}/../magnettools.jupyter:/home/vscode/work",
 		"-v", "${env:PWD}/../magnettools.jupyter/tmp/data:/home/vscode/work/data"
 	],
@@ -19,13 +19,13 @@
 
 	// Use 'appPort' to create a container with published ports. If the port isn't working, be sure
 	// your server accepts connections from all interfaces (0.0.0.0 or '*'), not just localhost.
-	// "appPort": [],
+	"appPort": ["127.0.0.1:8888:8888"],
 
 	// Uncomment the next line to run commands after the container is created.
 	// "postCreateCommand": "gcc -v",
 
 	// Comment out the next line if you want to run as root instead
-	"remoteUser": "vscode",
+	"remoteUser": "jovyan",
 
 	// Add the IDs of extensions you want installed when the container is created in the array below.
 	"extensions": [

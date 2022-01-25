@@ -75,6 +75,7 @@ RUN mamba install --quiet --yes \
     'bqplot' \
     'tabulate' \
     'mplcursors' \
+    'chevron' \
     && \
     mamba clean --all -f -y && \
     # Activate ipywidgets extension in the environment that runs the notebook server
@@ -99,9 +100,9 @@ RUN find / -name notebooks && \
     echo -n "Finding python version:" && \
     PYVER=$(find ${CONDA_DIR}/lib -maxdepth 1 -name python\* | perl -p -e "s|${CONDA_DIR}/lib/python||") && \
     echo " ${PYVER}" && \
-    ln -s /usr/lib/python3/dist-packages/MagnetTools ${CONDA_DIR}/lib/python${PYVER}/site-packages/MagnetTools
-    
-# ln -s /usr/lib/python3/dist-packages/MagnetTools/_MagnetTools.cpython-38-x86_64-linux-gnu.so ${CONDA_DIR}/lib/python${PYVER}/site-packages/MagnetTools
+    ln -s /usr/lib/python3/dist-packages/MagnetTools ${CONDA_DIR}/lib/python${PYVER}/site-packages/MagnetTools && \
+    ln -s /usr/lib/python3/dist-packages/python_magnetsetup ${CONDA_DIR}/lib/python${PYVER}/site-packages/python_magnetsetup && \
+    ln -s /usr/lib/python3/dist-packages/python_magnetgeo ${CONDA_DIR}/lib/python${PYVER}/site-packages/python_magnetgeo
 
 USER $NB_UID
 # Install facets which does not have a pip or conda package at the moment
