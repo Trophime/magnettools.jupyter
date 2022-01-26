@@ -131,4 +131,7 @@ dmypy.json
 # Emacs 
 *~
 
-conda/magnettools*
+# Conda packages
+conda
+magnettools*
+tmp
