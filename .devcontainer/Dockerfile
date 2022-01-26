@@ -38,8 +38,11 @@ RUN apt-get update \
     #\
     # Install C++ tools\
     && apt-get -y install build-essential python3-minimal libpython3.8 \
-    && apt-get -y install git \
-    && apt-get -y install python3-magnettools python3-magnetsetup python3-magnetgeo python3-chevron \
+    && apt-get -y install cmake clang g++ gfortran git \
+    && apt-get -y install cmake git clang g++ gfortran \
+    && apt-get -y --no-install-recommends install libyaml-cpp-dev libjson-spirit-dev libgsl-dev libfreesteam-dev \
+         libpopt-dev zlib1g-dev libeigen3-dev fadbad++ libgnuplot-iostream-dev \
+         libsphere-dev libsundials-dev libmatheval-dev \
     # ffmpeg for matplotlib anim & dvipng+cm-super for latex labels
     && apt-get update \
     && apt-get install -y --no-install-recommends ffmpeg dvipng cm-super \
@@ -64,6 +67,7 @@ RUN apt-get update \
 
 # Install Python 3 packages
 RUN mamba install --quiet --yes \
+    'boa' \
     'beautifulsoup4' \
     'conda-forge::blas=*=openblas' \
     'bokeh' \
@@ -117,18 +121,6 @@ RUN mamba install --quiet --yes \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${USERNAME}"
 
-# Install properly MagnetTools into conda env
-USER root
-RUN find / -name notebooks && \
-    find / -name work && \
-    echo "CONDA_DIR=${CONDA_DIR}" && \
-    echo -n "Finding python version:" && \
-    PYVER=$(find ${CONDA_DIR}/lib -maxdepth 1 -name python\* | perl -p -e "s|${CONDA_DIR}/lib/python||") && \
-    echo " ${PYVER}" && \
-    ln -s /usr/lib/python3/dist-packages/MagnetTools ${CONDA_DIR}/lib/python${PYVER}/site-packages/MagnetTools && \
-    ln -s /usr/lib/python3/dist-packages/python_magnetsetup ${CONDA_DIR}/lib/python${PYVER}/site-packages/python_magnetsetup && \
-    ln -s /usr/lib/python3/dist-packages/python_magnetgeo ${CONDA_DIR}/lib/python${PYVER}/site-packages/python_magnetgeo
-    
 # Install facets which does not have a pip or conda package at the moment
 WORKDIR /tmp
 RUN git clone https://github.com/PAIR-code/facets.git && \
@@ -137,7 +129,18 @@ RUN git clone https://github.com/PAIR-code/facets.git && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${USERNAME}"
 
-USER $USER_UID
+RUN apt-get update \
+    && apt-get -y install python3-magnetsetup python3-magnetgeo python3-chevron \
+    && echo "CONDA_DIR=${CONDA_DIR}" \
+    && echo -n "Finding python version:" \
+    && PYVER=$(find ${CONDA_DIR}/lib -maxdepth 1 -name python\* | perl -p -e "s|${CONDA_DIR}/lib/python||") \
+    && echo " ${PYVER}" \
+    && ln -s /usr/lib/python3/dist-packages/python_magnetsetup ${CONDA_DIR}/lib/python${PYVER}/site-packages/python_magnetsetup \
+    && ln -s /usr/lib/python3/dist-packages/python_magnetgeo ${CONDA_DIR}/lib/python${PYVER}/site-packages/python_magnetgeo \
+    # Clean up
+    && apt-get autoremove -y \
+    && apt-get clean -y \
+    && rm -rf /var/lib/apt/lists/*
 
 # Import matplotlib the first time to build the font cache.
 ENV XDG_CACHE_HOME="/home/${USERNAME}/.cache/"
