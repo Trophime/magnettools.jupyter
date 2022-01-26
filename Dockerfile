@@ -21,12 +21,13 @@ ENV LANG=en_US.UTF-8 \
 	LC_ALL=C.UTF-8
 
 RUN apt-get -qq update && \
-    apt-get -y install debian-keyring lsb-release && \
+    apt-get -y install build-essential debian-keyring lsb-release && \
     cp /usr/share/keyrings/debian-maintainers.gpg /etc/apt/trusted.gpg.d
 
 RUN echo "lsb_release=$(lsb_release -cs)"
 RUN echo "*** install prerequisites for MagnetTools ***" && \
     echo "deb http://euler.GRENOBLE.LNCMI.LOCAL/~trophime/debian/ $(lsb_release -cs) main" > /etc/apt/sources.list.d/lncmi.list && \
+    echo "deb-src http://euler.GRENOBLE.LNCMI.LOCAL/~trophime/debian/ $(lsb_release -cs) main" >> /etc/apt/sources.list.d/lncmi.list && \
     apt-get -qq update && \
     apt-get -y install cmake clang g++ gfortran git && \
     apt-get -y --no-install-recommends install libyaml-cpp-dev libjson-spirit-dev libgsl-dev libfreesteam-dev \
@@ -42,6 +43,9 @@ RUN apt-get update && \
 # Install Python 3 packages
 RUN mamba install --quiet --yes \
     'boa' \
+    'swig' \
+    'conda-forge::python-decouple' \
+    'requests' \
     'beautifulsoup4' \
     'conda-forge::blas=*=openblas' \
     'bokeh' \
@@ -103,18 +107,33 @@ RUN git clone https://github.com/PAIR-code/facets.git && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
 
-RUN apt-get update \
-    && apt-get -y install python3-magnetsetup python3-magnetgeo python3-chevron python3-mplcursors \
-    && echo "CONDA_DIR=${CONDA_DIR}" \
-    && echo -n "Finding python version:" \
-    && PYVER=$(find ${CONDA_DIR}/lib -maxdepth 1 -name python\* | perl -p -e "s|${CONDA_DIR}/lib/python||") \
-    && echo " ${PYVER}" \
-    && ln -s /usr/lib/python3/dist-packages/python_magnetsetup ${CONDA_DIR}/lib/python${PYVER}/site-packages/python_magnetsetup \
-    && ln -s /usr/lib/python3/dist-packages/python_magnetgeo ${CONDA_DIR}/lib/python${PYVER}/site-packages/python_magnetgeo \
-    # Clean up
-    && apt-get autoremove -y \
-    && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/*
+USER $NB_UID
+WORKDIR /tmp
+RUN git clone https://github.com/Trophime/magnetsetup.conda.git \
+    && git clone https://github.com/Trophime/magnetgeo.conda.git \
+    && git clone https://github.com/Trophime/magnettools.conda.git \
+    && cd magnettools.conda && ls \
+    && echo "get magnettools source" \
+    && sudo apt-get update \
+    && apt-get source magnettools \
+    && cd .. \
+    && sudo apt-get autoremove -y \
+    && sudo apt-get clean -y \
+    && sudo rm -rf /var/lib/apt/lists/*
+
+USER root
+RUN cd magnettools.conda \
+    && boa build . \
+    && mamba install --quiet --yes magnettools --use-local \
+    && cd ../magnetsetup.conda \
+    && boa build . \
+    && mamba install --quiet --yes magnetsetup --use-local \
+    && cd ../magnetgeo.conda \
+    && boa build . \
+    && mamba install --quiet --yes magnetgeo --use-local \
+    && rm -rf tmp/magnettools.conda \
+    && rm -rf /home/${NB_USER}/magnettools*
+
 
 # Import matplotlib the first time to build the font cache.
 ENV XDG_CACHE_HOME="/home/${NB_USER}/.cache/"
@@ -124,3 +143,4 @@ RUN MPLBACKEND=Agg python -c "import matplotlib.pyplot" && \
 
 USER $NB_UID
 WORKDIR $HOME
+ENV LD_LIBRARY_PATH=/opt/conda/lib/MagnetTools:$LD_LIBRARY_PATH

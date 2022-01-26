@@ -7,8 +7,9 @@
             "--net", "host", 
             "-e", "DISPLAY=${env:DISPLAY}",
             "-v", "/tmp/.X11-unix:/tmp/.X11-unix", 
-	    "-v", "${env:PWD}/../magnettools.jupyter:/home/vscode/work",
-		"-v", "${env:PWD}/../magnettools.jupyter/tmp/data:/home/vscode/work/data"
+	    "-v", "${env:PWD}/../magnettools.jupyter:/home/jovyan/work",
+		"-v", "${env:PWD}/../magnettools.jupyter/tmp/data:/home/jovyan/work/data",
+		"-v", "${env:PWD}/../python_magnetsetup/data:/data"
 	],
 
 	// Use 'settings' to set *default* container specific settings.json values on container create. 
