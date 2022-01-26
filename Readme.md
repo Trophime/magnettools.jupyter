@@ -59,6 +59,13 @@ import sys
 !{sys.executable} -m pip install numpy
 ```
 
+# Cleanup notebooks
+
+```bash
+jupyter nbconvert --clear-output --inplace my_notebook.ipynb
+```
+
+
 # References:
 
 https://jakevdp.github.io/blog/2017/12/05/installing-python-packages-from-jupyter/
