@@ -62,6 +62,10 @@ RUN mamba install --quiet --yes \
     'numba' \
     'numexpr' \
     'pandas' \
+    'conda-forge::pint' \
+    'conda-forge::pint-pandas' \
+    'panel' \
+    'hvplot' \
     'patsy' \
     'protobuf' \
     'pytables' \
@@ -81,6 +85,9 @@ RUN mamba install --quiet --yes \
     'tabulate' \
     'mplcursors' \
     'chevron' \
+    'pythreejs' \
+    'conda-forge::pythonocc-core=7.5.1' \
+    'conda-forge::occt=7.5.1' \
     && \
     mamba clean --all -f -y && \
     # Activate ipywidgets extension in the environment that runs the notebook server

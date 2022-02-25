@@ -9,9 +9,9 @@
             "-v", "/tmp/.X11-unix:/tmp/.X11-unix"
 	],
 	"mounts": [
-		"source=${localWorkspaceFolder}\\..\\magnettools.jupyter,target=/home/jovyan/work,type=bind,consistency=cached",
-		"source=${localWorkspaceFolder}\\..\\magnettools.jupyter\\data,target=/home/jovyan/data,type=bind,consistency=cached",
-		"source=${localWorkspaceFolder}\\..\\python_magnetsetup\\data,target=/data,type=bind,consistency=cached",
+		"source=${localWorkspaceFolder}/../magnettools.jupyter,target=/home/jovyan/work,type=bind,consistency=cached",
+		"source=${localWorkspaceFolder}/../magnettools.jupyter/data,target=/home/jovyan/data,type=bind,consistency=cached",
+		"source=${localWorkspaceFolder}/../python_magnetsetup/data,target=/data,type=bind,consistency=cached",
 	],
 
 	// Use 'settings' to set *default* container specific settings.json values on container create. 

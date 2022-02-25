@@ -23,6 +23,13 @@ On WSL2, to get X11 working:
 
 This feature is needed to get file selection with tkinter in notebooks.
 
+# Running notebooks in vscode remote container
+
+* start vscode
+* laucnh remote container
+* open a terminal
+* launch: 'start-notebook.sh'
+
 # Running as a Standalone webapp
 
 * `docker build -f ./Dockerfile-app -t trophime/imagnettools:app .`
