@@ -1,8 +1,8 @@
 # Running MagnetTools in Jupyter
 
-* `docker build -f ./Dockerfile -t trophime/imagnettools:focal .`
-* `docker run [--dns lncmi.dns] [-e DISPLAY=$DISPLAY] -v $PWD/tmp:/home/jovyan/work -v $PWD/tmp/data:/home/jovyan/data -p 8888:8888 trophime/imagnettools:focal`
-* `docker run -it --rm --entrypoint "bash"  [--dns lncmi.dns] -v ${PWD}/tmp:/home/jovyan/work -v $PWD/tmp/data:/home/jovyan/data  -p 8888:8888  trophime/imagnettools:focal`
+* ```docker build -f ./Dockerfile -t trophime/imagnettools:focal .```
+* ```docker run [--dns lncmi.dns] [-e DISPLAY=$DISPLAY] -v $PWD/tmp:/home/jovyan/work -v $PWD/tmp/data:/home/jovyan/data -p 8888:8888 trophime/imagnettools:focal```
+* ```docker run -it --rm --entrypoint "bash"  [--dns lncmi.dns] -v ${PWD}/tmp:/home/jovyan/work -v $PWD/tmp/data:/home/jovyan/data  -p 8888:8888  trophime/imagnettools:focal```
 
 To get `lncmi-dns`:
 
